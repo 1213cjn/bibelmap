@@ -70,3 +70,73 @@ function initDemoMap() {
     // 如果你要做保罗所有行程，这步非常重要
     map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const map = L.map('bible-map').setView([32.5, 35.0], 8);
+
+    // 基础底图
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    // --- 数据定义 ---
+
+    // 1. 耶稣的传道路径 (重点在加利利和犹太地)
+    const jesusPoints = [
+        { name: "拿撒勒", coords: [32.7019, 35.3033], desc: "耶稣长大的地方。" },
+        { name: "约旦河", coords: [31.8386, 35.5444], desc: "耶稣受洗的地方。" },
+        { name: "迦拿", coords: [32.7464, 35.3297], desc: "变水为酒的神迹。" },
+        { name: "迦百农", coords: [32.8811, 35.5750], desc: "耶稣传道的核心基地。" },
+        { name: "提比哩亚(加利利海)", coords: [32.7936, 35.5312], desc: "平静风浪，走在水面上。" },
+        { name: "耶路撒冷", coords: [31.7683, 35.2137], desc: "最后的晚餐、受难与复活。" }
+    ];
+
+    // 2. 保罗第一次布道 (原本的数据)
+    const paul1Points = [
+        { name: "叙利亚安提阿", coords: [36.1578, 36.1613], desc: "宣教出发点。" },
+        { name: "帕弗", coords: [34.7667, 32.4167], desc: "使术士眼瞎。" },
+        { name: "别加", coords: [36.95, 30.65], desc: "马可离开。" },
+        { name: "路司得", coords: [37.6, 32.2167], desc: "医治瘸子，被石头打。" }
+    ];
+
+    // --- 图层创建函数 ---
+
+    function createRouteLayer(points, color, label) {
+        const markers = L.layerGroup();
+        const coords = [];
+
+        points.forEach((loc, i) => {
+            coords.push(loc.coords);
+            L.marker(loc.coords)
+                .bindPopup(`<b>${label}: ${loc.name}</b><br>${loc.desc}`)
+                .addTo(markers);
+        });
+
+        const line = L.polyline(coords, {
+            color: color,
+            weight: 4,
+            opacity: 0.6,
+            dashArray: color === 'blue' ? '1' : '5, 10' // 耶稣用实线，保罗用虚线区分
+        });
+
+        return L.layerGroup([markers, line]);
+    }
+
+    // 创建各图层
+    const jesusLayer = createRouteLayer(jesusPoints, 'blue', '耶稣');
+    const paul1Layer = createRouteLayer(paul1Points, 'red', '保罗');
+
+    // 默认显示耶稣的路径
+    jesusLayer.addTo(map);
+
+    // --- 图层控制开关 ---
+    const overlays = {
+        "耶稣传道轨迹": jesusLayer,
+        "保罗第一次布道": paul1Layer
+    };
+
+    // 添加到地图右上角
+    L.control.layers(null, overlays, { collapsed: false }).addTo(map);
+
+    // 自动缩放以适应当前显示的图层
+    map.fitBounds(L.featureGroup([jesusLayer, paul1Layer]).getBounds());
+});
