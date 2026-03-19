@@ -126,17 +126,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const paul1Layer = createRouteLayer(paul1Points, 'red', '保罗');
 
     // 默认显示耶稣的路径
+// 👇 关键修改 1：把两个图层都默认添加到地图上
     jesusLayer.addTo(map);
+    paul1Layer.addTo(map);
 
-    // --- 图层控制开关 ---
+    // --- 图层控制开关 --- (这部分保持不变，用户依然可以手动关掉某个图层)
     const overlays = {
         "耶稣传道轨迹": jesusLayer,
         "保罗第一次布道": paul1Layer
     };
-
-    // 添加到地图右上角
     L.control.layers(null, overlays, { collapsed: false }).addTo(map);
 
-    // 自动缩放以适应当前显示的图层
-    map.fitBounds(L.featureGroup([jesusLayer, paul1Layer]).getBounds());
+    // 👇 关键修改 2：把所有路线打包，让地图自动缩放并把它们全部框在屏幕内
+    const allLayers = L.featureGroup([jesusLayer, paul1Layer]);
+    // padding: [30, 30] 是为了给四周留出 30 像素的边缘，防止路线贴到屏幕死角
+    map.fitBounds(allLayers.getBounds(), { padding: [30, 30] });
 });
